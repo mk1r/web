@@ -1,9 +1,10 @@
 import { translations } from 'assets/translations'
 import { KeyManager } from 'context/WalletProvider/config'
 
-import { getRandomNumericalString, getSeedPhrase } from '../integration/helpers'
+import { getRandomNumericalString, getSeedPhrase } from '../../cypress/helpers'
 
 const baseUrl = Cypress.config().baseUrl
+const ethereumApi = Cypress.env('REACT_APP_UNCHAINED_ETHEREUM_HTTP_URL')
 
 describe('ShapeShift home page', () => {
   it('loads correctly', () => {
@@ -68,6 +69,10 @@ describe('Wallet type', () => {
       cy.getBySel('wallet-native-set-name-input').type('cypress-test')
       cy.getBySel('wallet-native-password-input').type(getRandomNumericalString())
       cy.getBySel('wallet-native-password-submit-button').click()
+
+      cy.intercept('GET', `${ethereumApi}/api/v1/account/*`, {
+        fixture: 'ethereum/account.json'
+      }).as('getAccount')
       // This redirect is slow - it might flake if it takes < 4 seconds
       cy.url().should('equal', `${baseUrl}dashboard`)
     })
