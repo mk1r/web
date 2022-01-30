@@ -1,9 +1,9 @@
 import { translations } from 'assets/translations'
 import { KeyManager } from 'context/WalletProvider/config'
 
+import { getRandomNumericalString, getSeedPhrase } from '../integration/helpers'
+
 const baseUrl = Cypress.config().baseUrl
-const nativeWalletSeed: string = Cypress.env().nativeWalletSeed
-const nativeWalletPassword: string = Cypress.env().nativeWalletPassword
 
 describe('ShapeShift home page', () => {
   it('loads correctly', () => {
@@ -47,9 +47,9 @@ describe('Wallet type', () => {
       cy.getBySel('wallet-native-seed-input').clear()
 
       // Test 'invalid bip39 mnemonic` seed validation
-      cy.getBySel('wallet-native-seed-input')
-        .click()
-        .type('this-is-long-enough-but-is-not-a-valid-seed-phrase')
+      cy.getBySel('wallet-native-seed-input').type(
+        'this-is-long-enough-but-is-not-a-valid-seed-phrase'
+      )
       cy.getBySel('wallet-native-seed-submit-button').click()
       cy.getBySel('wallet-native-seed-validation-message').should(
         'have.text',
@@ -57,13 +57,19 @@ describe('Wallet type', () => {
       )
       cy.getBySel('wallet-native-seed-input').clear()
 
-      // Use test seed to load an account with transactions
-      cy.getBySel('wallet-native-seed-input').click().type(nativeWalletSeed)
+      // Use randomly generated seed to load an account
+      cy.wrap(getSeedPhrase()).then(seed => {
+        if (typeof seed === 'string') {
+          cy.getBySel('wallet-native-seed-input').type(seed)
+        }
+      })
       cy.getBySel('wallet-native-seed-submit-button').click()
 
-      cy.getBySel('wallet-native-set-name-input').click().type('cypress-test')
-      cy.getBySel('wallet-native-password-input').click().type(nativeWalletPassword)
+      cy.getBySel('wallet-native-set-name-input').type('cypress-test')
+      cy.getBySel('wallet-native-password-input').type(getRandomNumericalString())
       cy.getBySel('wallet-native-password-submit-button').click()
+      // This redirect is slow - it might flake if it takes < 4 seconds
+      cy.url().should('equal', `${baseUrl}dashboard`)
     })
   })
 
