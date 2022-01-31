@@ -1,25 +1,26 @@
 import { translations } from 'assets/translations'
 import { KeyManager } from 'context/WalletProvider/config'
 
-import { getRandomNumericalString, getSeedPhrase } from '../../cypress/helpers'
+import { getRandomNumericalString } from '../../cypress/helpers'
 
 const baseUrl = Cypress.config().baseUrl
+const seed = Cypress.env('testSeed')
 const ethereumApi = Cypress.env('REACT_APP_UNCHAINED_ETHEREUM_HTTP_URL')
 
-describe('ShapeShift home page', () => {
-  it('loads correctly', () => {
-    cy.visit('')
-    cy.url().should('equal', `${baseUrl}connect-wallet?returnUrl=/dashboard`)
-
-    // Open WalletProvider.SelectModal
-    cy.getBySel('connect-wallet-button').click()
-
-    // All expected wallet types rendered
-    Object.values(KeyManager).forEach(value => {
-      cy.getBySel(`wallet-${value}-button`)
-    })
-  })
-})
+// describe('ShapeShift home page', () => {
+//   it('loads correctly', () => {
+//     cy.visit('')
+//     cy.url().should('equal', `${baseUrl}connect-wallet?returnUrl=/dashboard`)
+//
+//     // Open WalletProvider.SelectModal
+//     cy.getBySel('connect-wallet-button').click()
+//
+//     // All expected wallet types rendered
+//     Object.values(KeyManager).forEach(value => {
+//       cy.getBySel(`wallet-${value}-button`)
+//     })
+//   })
+// })
 
 describe('Wallet type', () => {
   describe('Native', () => {
@@ -58,12 +59,7 @@ describe('Wallet type', () => {
       )
       cy.getBySel('wallet-native-seed-input').clear()
 
-      // Use randomly generated seed to load an account
-      cy.wrap(getSeedPhrase()).then(seed => {
-        if (typeof seed === 'string') {
-          cy.getBySel('wallet-native-seed-input').type(seed)
-        }
-      })
+      cy.getBySel('wallet-native-seed-input').type(seed)
       cy.getBySel('wallet-native-seed-submit-button').click()
 
       cy.getBySel('wallet-native-set-name-input').type('cypress-test')
@@ -75,20 +71,24 @@ describe('Wallet type', () => {
       }).as('getAccount')
       // This redirect is slow - it might flake if it takes < 4 seconds
       cy.url().should('equal', `${baseUrl}dashboard`)
+
+      // Check balances
+      // FIXME - split into separate test once we have programmatic login
+      cy.getBySel('dashboard-account-row').should('have.length', 7)
     })
   })
 
-  it('Portis can log in', () => {
-    cy.visit('')
-
-    // Open WalletProvider.SelectModal
-    cy.getBySel('connect-wallet-button').click()
-    cy.getBySel('wallet-portis-button').click()
-    cy.getBySel('wallet-pair-button').click()
-
-    // We can't use UI for this bit:
-    // https://docs.cypress.io/guides/references/trade-offs#Same-origin
-    // Instead, we'll need to do this part programmatically using cy.request():
-    // https://docs.cypress.io/guides/references/best-practices#Visiting-external-sites
-  })
+  // it('Portis can log in', () => {
+  //   cy.visit('')
+  //
+  //   // Open WalletProvider.SelectModal
+  //   cy.getBySel('connect-wallet-button').click()
+  //   cy.getBySel('wallet-portis-button').click()
+  //   cy.getBySel('wallet-pair-button').click()
+  //
+  //   // We can't use UI for this bit:
+  //   // https://docs.cypress.io/guides/references/trade-offs#Same-origin
+  //   // Instead, we'll need to do this part programmatically using cy.request():
+  //   // https://docs.cypress.io/guides/references/best-practices#Visiting-external-sites
+  // })
 })
